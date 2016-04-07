@@ -1,0 +1,17 @@
+{
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
+  },
+  "scripts": {
+    "build": "node_modules/.bin/webpack --output-library flow src/index.js build/IOFlow.js",
+    "watch": "node_modules/.bin/webpack --watch --output-library flow src/index.js build/IOFlow.js"
+  },
+  "devDependencies": {
+    "babel-core": "^6.7.4",
+    "babel-loader": "^6.2.4",
+    "babel-preset-es2015": "^6.6.0",
+    "webpack": "^1.12.14"
+  }
+}

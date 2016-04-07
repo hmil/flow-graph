@@ -1,0 +1,8 @@
+{
+  "esversion": 6,
+  "eqnull": true,
+  "quotmark": true,
+  "undef": true,
+  "unused": true,
+  "browser": true
+}
