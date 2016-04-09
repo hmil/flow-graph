@@ -1,9 +1,8 @@
-import FlowGraph from './FlowGraph.js';
-import Node from './Node.js';
-import GraphView from './views/GraphView.js';
-
-export {
-  FlowGraph,
-  Node,
-  GraphView
+module.exports = {
+  FlowGraph: require('./core/FlowGraph.js').default,
+  Node: require('./core/Node.js').default,
+  GraphView: require('./views/vanilla/GraphView.js').default,
+  styles: {
+    'default': require('./styles/default.style.html')
+  }
 };

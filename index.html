@@ -2,67 +2,18 @@
 <html>
 <head>
 <meta charset="utf-8">
-<style>
 
-.flow-canvas {
-  background-color: #1c2420;
+<style media="screen">
+body, html {
+  margin: 0;
 }
-
-.flow-canvas text {
-  stroke: transparent;
-  fill: #69d0d6;
-}
-
-text.flow-icon {
-  font-family: FontAwesome;
-}
-
-.flow-node {
-  cursor: move;
-}
-.flow-node .flow-title {
-  font: 14px sans-serif;
-}
-.flow-node .flow-body {
-  fill: #29302d;
-  stroke: #4aac7c;
-  stroke-width: 1px;
-}
-
-.flow-io circle {
-  fill: #fff;
-  stroke: #4aac7c;
-  stroke-width: 1.5px;
-  cursor: crosshair;
-}
-
-.flow-io {
-  font: 10px sans-serif;
-}
-
-.flow-io circle:hover {
-  stroke-width: 2.5px;
-}
-
-.flow-edge {
-  fill: none;
-  stroke: #4aac7c;
-  stroke-width: 1.5px;
-}
-
-.flow-edge:hover {
-  stroke-width: 2px;
-  stroke: #69d0d6;
-}
-
 
 #scene {
-  width: 1200px;
+  width: 100%;
   height: 600px;
   margin: auto;
 }
 </style>
-
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
 
 </head>
@@ -81,6 +32,8 @@ function fails(cb) {
     console.error(e);
   }
 }
+
+  flow.FlowGraph.setStyle(flow.styles.default);
 
   var graph = new flow.FlowGraph();
 
@@ -123,9 +76,9 @@ function fails(cb) {
 
   new flow.GraphView(graph, { domNode: document.getElementById('scene') });
 
-  window.addEventListener('contextmenu', function (e) {
-    e.preventDefault();
-  }, false);
+  // window.addEventListener('contextmenu', function (e) {
+  //   e.preventDefault();
+  // }, false);
 
 </script>
 

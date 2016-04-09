@@ -1,6 +1,5 @@
-import EventEmitter from '../EventEmitter.js';
+import EventEmitter from '../../core/EventEmitter.js';
 import { createSVGNode } from './SVGUtils.js';
-import * as Layout from './Layout.js';
 
 export default class EdgeView extends EventEmitter {
 
@@ -61,15 +60,15 @@ export default class EdgeView extends EventEmitter {
     const src = this._edge.src;
     const dest = this._edge.dest;
 
-    const startRelative = Layout.getOutputPos(src.node.getOutputIndex(src));
+    const startRelative = this.style.getOutputPos(src.node.getOutputIndex(src));
     const startX = src.node.x + startRelative.x;
     const startY = src.node.y + startRelative.y;
 
-    const endRelative = Layout.getInputPos(dest.node.getInputIndex(dest));
+    const endRelative = this.style.getInputPos(dest.node.getInputIndex(dest));
     const endX = dest.node.x + endRelative.x;
     const endY = dest.node.y + endRelative.y;
 
-    this._el.setAttribute('d', Layout.getEdgePathDef(startX, startY, endX, endY));
+    this._el.setAttribute('d', this.style.getEdgePathDef(startX, startY, endX, endY));
   }
 
   get el() {
@@ -78,5 +77,9 @@ export default class EdgeView extends EventEmitter {
 
   get edge() {
     return this._edge;
+  }
+
+  get style() {
+    return this._graphView.style;
   }
 }

@@ -4,7 +4,10 @@ import Edge from './Edge.js';
 import Cast from './Cast.js';
 import EventEmitter from './EventEmitter.js';
 
-export default class FlowGraph extends EventEmitter {
+var _style = null;
+var _styleNode = null;
+
+class FlowGraph extends EventEmitter {
 
   constructor() {
     super();
@@ -35,7 +38,7 @@ export default class FlowGraph extends EventEmitter {
 
     let edge = new Edge(this, output, input);
 
-    const trace = this.typeCheck(edge);
+    const trace = this.typeCheck(edge.src.type, edge.dest.type);
     if (trace === false) {
       throw new Error(`Cannot create edge ${edge} because '${output.type}' is not a subtype of '${input.type}'.`);
     }
@@ -71,9 +74,9 @@ export default class FlowGraph extends EventEmitter {
   /**
    * Checks that output.type <: input.type
    */
-  typeCheck(edge) {
+  typeCheck(outType, inType) {
     const visited = {};
-    visited[edge.src.type] = true;
+    visited[outType] = true;
 
     const _typeTrace = (output, input) => {
       if (output.lte(input)) {
@@ -91,7 +94,7 @@ export default class FlowGraph extends EventEmitter {
       }
     };
 
-    return _typeTrace(edge.src.type, edge.dest.type);
+    return _typeTrace(outType, inType);
   }
 
 
@@ -116,4 +119,26 @@ export default class FlowGraph extends EventEmitter {
     return this._nodes;
   }
 
+  get style() {
+    return _style;
+  }
 }
+
+FlowGraph.setStyle = function(style) {
+  FlowGraph.unsetStyle();
+  if (_styleNode == null) {
+    _styleNode = document.createElement('style');
+    document.head.appendChild(_styleNode);
+    _styleNode.type = 'text/css';
+  }
+  _styleNode.innerHTML = style.css;
+  _style = style;
+};
+
+FlowGraph.unsetStyle = function() {
+  if (_styleNode != null && _styleNode.parentNode != null) {
+    _styleNode.parentNode.removeChild(_styleNode);
+  }
+};
+
+export default FlowGraph;

@@ -1,8 +1,7 @@
 import EdgeView from './EdgeView.js';
 import NodeView from './NodeView.js';
 import { createSVGNode } from './SVGUtils.js';
-import * as Layout from './Layout.js';
-import NodeInput from '../NodeInput.js';
+import NodeInput from '../../core/NodeInput.js';
 
 export default class GraphView {
 
@@ -43,8 +42,7 @@ export default class GraphView {
 
     this._mouseUpHandler = (evt) => {
       if (this._previewEdgeDragging === true) {
-        this._el.removeChild(this._previewEdge);
-        this._previewEdgeDragging = false;
+        this.stopPreviewEdgeDrag();
         if (evt.target.hasAttribute('data-flow-io')) {
           const node = this._graph.nodes[evt.target.getAttribute('data-node')];
           const endpoint = (this._previewEdgeDragFromInput === true ? node.outputs : node.inputs)[evt.target.getAttribute('data-name')];
@@ -99,6 +97,12 @@ export default class GraphView {
     edge.destroy();
   }
 
+  stopPreviewEdgeDrag() {
+    this._el.removeChild(this._previewEdge);
+    this._previewEdgeDragging = false;
+    this._updateDropTargets();
+  }
+
   startPreviewEdgeDrag(endpoint, dragStart) {
     this._dragStart.x = dragStart.x;
     this._dragStart.y = dragStart.y;
@@ -106,12 +110,13 @@ export default class GraphView {
     this._previewEdgeEndpoint = endpoint;
     this._previewEdgeDragFromInput = (endpoint instanceof NodeInput);
     this._previewEdgeDragAnchor = this._previewEdgeDragFromInput ?
-      Layout.getInputPos(endpoint.node.getInputIndex(endpoint)) :
-      Layout.getOutputPos(endpoint.node.getOutputIndex(endpoint));
+      this.style.getInputPos(endpoint.node.getInputIndex(endpoint)) :
+      this.style.getOutputPos(endpoint.node.getOutputIndex(endpoint));
     this._previewEdgeDragAnchor.x += endpoint.node.x;
     this._previewEdgeDragAnchor.y += endpoint.node.y;
     this._el.insertBefore(this._previewEdge, this._el.firstChild);
     this._updatePreviewEdge(this._previewEdgeDragAnchor.x, this._previewEdgeDragAnchor.y);
+    this._updateDropTargets();
   }
 
   _updatePreviewEdge(cursorX, cursorY) {
@@ -122,7 +127,17 @@ export default class GraphView {
       src = cursor;
       dest = this._previewEdgeDragAnchor;
     }
-    this._previewEdge.setAttribute('d', Layout.getEdgePathDef(src.x, src.y, dest.x, dest.y));
+    this._previewEdge.setAttribute('d', this.style.getEdgePathDef(src.x, src.y, dest.x, dest.y));
+  }
+
+  _updateDropTargets() {
+    for (let i in this._nodes) {
+      if (this._previewEdgeDragging === true) {
+        this._nodes[i].updateDropTargets(this._previewEdgeEndpoint);
+      } else {
+        this._nodes[i].updateDropTargets(null);
+      }
+    }
   }
 
   render() {
@@ -138,5 +153,13 @@ export default class GraphView {
       const nv = this._nodes[i] = new NodeView(this, this._graph.nodes[i]);
       this._el.appendChild(nv.el);
     }
+  }
+
+  get graph() {
+    return this._graph;
+  }
+
+  get style() {
+    return this._graph.style;
   }
 }
