@@ -3,9 +3,7 @@ import NodeInput from './NodeInput.js';
 import Edge from './Edge.js';
 import Cast from './Cast.js';
 import EventEmitter from './EventEmitter.js';
-
-var _style = null;
-var _styleNode = null;
+import { styleManager } from '../utils.js';
 
 class FlowGraph extends EventEmitter {
 
@@ -118,27 +116,10 @@ class FlowGraph extends EventEmitter {
   get nodes() {
     return this._nodes;
   }
-
-  get style() {
-    return _style;
-  }
 }
 
 FlowGraph.setStyle = function(style) {
-  FlowGraph.unsetStyle();
-  if (_styleNode == null) {
-    _styleNode = document.createElement('style');
-    document.head.appendChild(_styleNode);
-    _styleNode.type = 'text/css';
-  }
-  _styleNode.innerHTML = style.css;
-  _style = style;
-};
-
-FlowGraph.unsetStyle = function() {
-  if (_styleNode != null && _styleNode.parentNode != null) {
-    _styleNode.parentNode.removeChild(_styleNode);
-  }
+  styleManager.setStyle(style);
 };
 
 export default FlowGraph;

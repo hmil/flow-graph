@@ -1,0 +1,18 @@
+{
+  "name": "ioflow",
+  "description": "Interactive input/output graphs",
+  "main": "dist/ioflow-core.js",
+  "authors": [
+    "hmil <github.com/hmil>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "graph",
+    "svg",
+    "flow"
+  ],
+  "homepage": "https://github.com/hmil/flow-graph",
+  "ignore": [
+    "node_modules"
+  ]
+}

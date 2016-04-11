@@ -1,12 +1,17 @@
 import EdgeView from './EdgeView.js';
 import NodeView from './NodeView.js';
 import { createSVGNode } from './SVGUtils.js';
-import NodeInput from '../../core/NodeInput.js';
+import * as defaultStyle from '../../styles/default.style.html';
+import { StyleManager } from '../../utils.js';
 
 export default class GraphView {
 
   constructor(graph, options) {
     this._graph = graph;
+
+    if (!StyleManager.hasStyle()) {
+      StyleManager.setStyle(defaultStyle);
+    }
 
     this._edges = {};
     this._nodes = {};
@@ -108,7 +113,7 @@ export default class GraphView {
     this._dragStart.y = dragStart.y;
     this._previewEdgeDragging = true;
     this._previewEdgeEndpoint = endpoint;
-    this._previewEdgeDragFromInput = (endpoint instanceof NodeInput);
+    this._previewEdgeDragFromInput = (endpoint.isInput);
     this._previewEdgeDragAnchor = this._previewEdgeDragFromInput ?
       this.style.getInputPos(endpoint.node.getInputIndex(endpoint)) :
       this.style.getOutputPos(endpoint.node.getOutputIndex(endpoint));
@@ -160,6 +165,6 @@ export default class GraphView {
   }
 
   get style() {
-    return this._graph.style;
+    return StyleManager.style;
   }
 }

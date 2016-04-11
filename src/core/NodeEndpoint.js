@@ -32,6 +32,14 @@ export default class NodeEndpoint {
     return this._name;
   }
 
+  // Duck typing utilities
+  get isInput() {
+    return false;
+  }
+  get isOutput() {
+    return false;
+  }
+
 
   toString() {
     return `[${this.node}].<${this.name}>:${this.type}`;

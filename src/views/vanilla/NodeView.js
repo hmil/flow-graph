@@ -1,6 +1,4 @@
 import EventEmitter from '../../core/EventEmitter.js';
-import NodeOutput from '../../core/NodeOutput.js';
-import NodeInput from '../../core/NodeInput.js';
 import { createSVGNode } from './SVGUtils.js';
 
 export default class NodeView extends EventEmitter {
@@ -91,7 +89,7 @@ export default class NodeView extends EventEmitter {
 
   _getInputClassModifier(input) {
     if (this._targetEndpoint == null) return '';
-    else if ((this._targetEndpoint instanceof NodeOutput) && this._graphView.graph.typeCheck(this._targetEndpoint.type, input.type)) {
+    else if ((this._targetEndpoint.isOutput) && this._graphView.graph.typeCheck(this._targetEndpoint.type, input.type)) {
       return 'flow-valid';
     } else {
       return 'flow-invalid';
@@ -100,7 +98,7 @@ export default class NodeView extends EventEmitter {
 
   _getOutputClassModifier(output) {
     if (this._targetEndpoint == null) return '';
-    else if ((this._targetEndpoint instanceof NodeInput) && this._graphView.graph.typeCheck(output.type, this._targetEndpoint.type)) {
+    else if ((this._targetEndpoint.isInput) && this._graphView.graph.typeCheck(output.type, this._targetEndpoint.type)) {
       return 'flow-valid';
     } else {
       return 'flow-invalid';
