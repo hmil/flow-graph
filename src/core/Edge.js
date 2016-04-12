@@ -1,12 +1,25 @@
-import GraphObject from './GraphObject.js';
+import EventEmitter from './EventEmitter.js';
 
-export default class Edge extends GraphObject {
+class Edge extends EventEmitter {
 
   constructor(graph, src, dest) {
     super();
     this._graph = graph;
     this._src = src;
     this._dest = dest;
+  }
+
+  toJSON() {
+    return {
+      src: {
+        name: this._src.name,
+        node: this._src.node.id
+      },
+      dest: {
+        name: this._dest.name,
+        node: this._dest.node.id
+      }
+    };
   }
 
   get src() {
@@ -25,3 +38,13 @@ export default class Edge extends GraphObject {
     return `${this.src} --> ${this.dest}`;
   }
 }
+
+Edge.srcFromJSON = function(graph, data) {
+  return graph.nodes[data.src.node].outputs[data.src.name];
+};
+
+Edge.destFromJSON = function(graph, data) {
+  return graph.nodes[data.dest.node].inputs[data.dest.name];
+};
+
+export default Edge;

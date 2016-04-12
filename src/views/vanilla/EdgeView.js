@@ -27,9 +27,6 @@ export default class EdgeView extends EventEmitter {
         this._edge.remove();
       }
     };
-    this._edgeRemoveHandler = () => {
-      this._graphView.removeEdge(this);
-    };
 
     // Initialization
     this.render();
@@ -43,7 +40,6 @@ export default class EdgeView extends EventEmitter {
   _bindEvents() {
     this._edge.src.node.on('change', this._changeHandler);
     this._edge.dest.node.on('change', this._changeHandler);
-    this._edge.on('remove', this._edgeRemoveHandler);
     this._el.addEventListener('dblclick', this._dblClickHandler);
     this._el.addEventListener('mousedown', this._mouseDownHandler);
   }
@@ -51,7 +47,6 @@ export default class EdgeView extends EventEmitter {
   _unbindEvents() {
     this._edge.src.node.off('change', this._changeHandler);
     this._edge.dest.node.off('change', this._changeHandler);
-    this._edge.off('remove', this._edgeRemoveHandler);
     this._el.removeEventListener('dblclick', this._dblClickHandler);
     this._el.removeEventListener('mousedown', this._mouseDownHandler);
   }

@@ -1,7 +1,6 @@
-import NodeOutput from './NodeOutput.js';
-import NodeInput from './NodeInput.js';
 import Edge from './Edge.js';
 import Cast from './Cast.js';
+import Node from './Node.js';
 import EventEmitter from './EventEmitter.js';
 import { styleManager } from '../utils.js';
 
@@ -9,16 +8,59 @@ class FlowGraph extends EventEmitter {
 
   constructor() {
     super();
-    this._nodes = [];
+    this._nodes = {};
     this._edges = [];
     this._casts = {};
   }
 
-  addNode(node) {
+  setJSON(data) {
+    this.removeAll();
+
+    for (let node of data.nodes) {
+      this.addNode(node);
+    }
+    for (let edge of data.edges) {
+      let src = Edge.srcFromJSON(this, edge);
+      let dest = Edge.destFromJSON(this, edge);
+      this.link(src, dest);
+    }
+    return this;
+  }
+
+  toJSON() {
+    const data = {
+      version: 0,
+      nodes: [],
+      edges: []
+    };
+
+    for (let i in this._nodes) {
+      data.nodes.push(this._nodes[i].toJSON());
+    }
+    for (let i in this._edges) {
+      data.edges.push(this._edges[i].toJSON());
+    }
+
+    return data;
+  }
+
+  removeAll() {
+    const nb_edges = this._edges.length;
+    for (let i = 0 ; i < nb_edges ; i++) {
+      this._edges[0].remove();
+    }
+    for (let i of Object.keys(this._nodes)) {
+      this._nodes[i].remove();
+    }
+  }
+
+  addNode(nodeDef) {
+    const node = new Node(this, nodeDef);
     if (this._nodes.hasOwnProperty(node.id)) {
       throw new Error(`Node ${node.id} already exists in the graph`);
     }
     this._nodes[node.id] = node;
+    this.trigger('change');
     return node;
   }
 
@@ -27,10 +69,10 @@ class FlowGraph extends EventEmitter {
   }
 
   link(output, input) {
-    if (!(output instanceof NodeOutput)) {
+    if (!(output.isOutput)) {
       throw new Error('FlowGraph.link(output, input): output must be a node output.');
     }
-    if (!(input instanceof NodeInput)) {
+    if (!(input.isInput)) {
       throw new Error('FlowGraph.link(output, input): input must be a node input.');
     }
 
@@ -66,7 +108,6 @@ class FlowGraph extends EventEmitter {
     edge.dest.disconnect(edge);
     this._edges.splice(this._edges.indexOf(edge), 1);
     this.trigger('change');
-    edge.trigger('remove');
   }
 
   /**
@@ -120,6 +161,10 @@ class FlowGraph extends EventEmitter {
 
 FlowGraph.setStyle = function(style) {
   styleManager.setStyle(style);
+};
+
+FlowGraph.fromJSON = function(data) {
+  return new FlowGraph().setJSON(data);
 };
 
 export default FlowGraph;

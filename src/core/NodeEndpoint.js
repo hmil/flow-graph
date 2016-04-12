@@ -9,6 +9,13 @@ export default class NodeEndpoint {
     this.node = node;
   }
 
+  toJSON() {
+    return {
+      name: this._name,
+      type: this._type.toString()
+    };
+  }
+
   connect(edge) {
     this._edges.push(edge);
   }

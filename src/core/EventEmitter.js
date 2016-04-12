@@ -21,10 +21,14 @@ export default class EventEmitter {
       let idx = bucket.indexOf(listener);
       if (idx >= 0) {
         bucket.splice(idx, 1);
+      } else {
+        console.warn(`EventEmitter.off: bucket ${evtName} does not contain listener ${listener}`);
       }
       if (bucket.size === 0) {
         delete this._listeners[evtName];
       }
+    } else {
+      console.warn(`EventEmitter.off: bucket ${evtName} does not exist`);
     }
   }
 

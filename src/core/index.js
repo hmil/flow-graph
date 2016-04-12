@@ -1,4 +1,3 @@
 module.exports = {
-  FlowGraph: require('./FlowGraph.js').default,
-  Node: require('./Node.js').default
+  FlowGraph: require('./FlowGraph.js').default
 };

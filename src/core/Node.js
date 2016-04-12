@@ -1,19 +1,21 @@
 import NodeInput from './NodeInput.js';
 import NodeOutput from './NodeOutput.js';
-import GraphObject from './GraphObject.js';
+import EventEmitter from './EventEmitter.js';
+import { uid } from '../utils.js';
 
-export default class Node extends GraphObject {
+export default class Node extends EventEmitter {
 
-  constructor(params = {}) {
+  constructor(graph, params = {}) {
     super();
 
+    this._id = params.hasOwnProperty('id') ? params.id : uid();
     this._pos = {x: params.x || 0, y: params.y || 0};
+    this._graph = graph;
     this._inputs = {};
     this._outputs = {};
     this._x = params.x || 0;
     this._y = params.y || 0;
     this.name = params.name || 'unnamed node';
-
     if (params.input) {
       for (let input of params.input) {
         this.addInput(input);
@@ -24,6 +26,27 @@ export default class Node extends GraphObject {
         this.addOutput(output);
       }
     }
+  }
+
+  toJSON() {
+    const data = {
+      id: this._id,
+      x: this._x,
+      y: this._y,
+      name: this.name,
+      input: [],
+      output: []
+    };
+
+    for (let i in this._inputs) {
+      data.input.push(this._inputs[i].toJSON());
+    }
+
+    for (let i in this._outputs) {
+      data.output.push(this._outputs[i].toJSON());
+    }
+
+    return data;
   }
 
   addInput(input) {
@@ -48,6 +71,14 @@ export default class Node extends GraphObject {
   removeOutput(name) {
     delete this._outputs[name];
     // TODO check bonds
+  }
+
+  remove() {
+    this._graph.removeNode(this);
+  }
+
+  get id() {
+    return this._id;
   }
 
   get inputs() {
