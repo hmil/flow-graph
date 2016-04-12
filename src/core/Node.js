@@ -5,27 +5,20 @@ import { uid } from '../utils.js';
 
 export default class Node extends EventEmitter {
 
-  constructor(graph, params = {}) {
+  constructor(classname, graph, props = {}) {
     super();
 
-    this._id = params.hasOwnProperty('id') ? params.id : uid();
-    this._pos = {x: params.x || 0, y: params.y || 0};
+    this._classname = classname;
     this._graph = graph;
+
+    this._id = props.hasOwnProperty('id') ? props.id : uid();
+    this._pos = {x: props.x || 0, y: props.y || 0};
+    this._x = props.x || 0;
+    this._y = props.y || 0;
+    this.name = props.name || 'unnamed node';
+
     this._inputs = {};
     this._outputs = {};
-    this._x = params.x || 0;
-    this._y = params.y || 0;
-    this.name = params.name || 'unnamed node';
-    if (params.input) {
-      for (let input of params.input) {
-        this.addInput(input);
-      }
-    }
-    if (params.output) {
-      for (let output of params.output) {
-        this.addOutput(output);
-      }
-    }
   }
 
   toJSON() {
@@ -53,14 +46,14 @@ export default class Node extends EventEmitter {
     if (this._inputs.hasOwnProperty(input.name)) {
       throw new Error(`Input ${input.name} was defined twice! (first time with type ${this._inputs[input.name].type}, second time with type ${input.type})`);
     }
-    this._inputs[input.name] = new NodeInput(this, input);
+    this._inputs[input.name] = input;
   }
 
   addOutput(output) {
     if (this._outputs.hasOwnProperty(output.name)) {
       throw new Error(`Output ${output.name} was defined twice! (first time with type ${this._outputs[output.name].type}, second time with type ${output.type})`);
     }
-    this._outputs[output.name] = new NodeOutput(this, output);
+    this._outputs[output.name] = output;
   }
 
   removeInput(name) {
@@ -75,6 +68,11 @@ export default class Node extends EventEmitter {
 
   remove() {
     this._graph.removeNode(this);
+    // TODO: ensure all listeners are removed
+  }
+
+  send(outputName, data) {
+    this._outputs[outputName].send(data);
   }
 
   get id() {
@@ -97,6 +95,10 @@ export default class Node extends EventEmitter {
     return Object.keys(this._outputs).length;
   }
 
+  get classname() {
+    return this._classname;
+  }
+
   getInputIndex(input) {
     return Object.keys(this._inputs).indexOf(input.name);
   }
@@ -115,12 +117,17 @@ export default class Node extends EventEmitter {
 
   set x(x) {
     this._x = x;
-    this.trigger('change');
+    this._signalChange();
   }
 
   set y(y) {
     this._y = y;
+    this._signalChange();
+  }
+
+  _signalChange() {
     this.trigger('change');
+    this._graph.trigger('update');
   }
 
   toString() {

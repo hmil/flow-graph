@@ -1,6 +1,6 @@
 import Edge from './Edge.js';
 import Cast from './Cast.js';
-import Node from './Node.js';
+import NodeBuilder from './NodeBuilder.js';
 import EventEmitter from './EventEmitter.js';
 import { styleManager } from '../utils.js';
 
@@ -11,13 +11,33 @@ class FlowGraph extends EventEmitter {
     this._nodes = {};
     this._edges = [];
     this._casts = {};
+    this._defs = {};
+  }
+
+  define(name, factory) {
+    if (this._defs.hasOwnProperty(name)) {
+      throw new Error(`Trying to define node ${name} but this node already exists`);
+    }
+    this._defs[name] = factory;
+  }
+
+  require(name) {
+    let factory = this._defs[name];
+
+    if (factory == null) {
+      throw new Error(`Node type '${name}' was not defined`);
+    }
+
+    let def = new NodeBuilder(name);
+    factory(def);
+    return def;
   }
 
   setJSON(data) {
     this.removeAll();
 
     for (let node of data.nodes) {
-      this.addNode(node);
+      this.addNode(node.n, node.p);
     }
     for (let edge of data.edges) {
       let src = Edge.srcFromJSON(this, edge);
@@ -35,7 +55,10 @@ class FlowGraph extends EventEmitter {
     };
 
     for (let i in this._nodes) {
-      data.nodes.push(this._nodes[i].toJSON());
+      data.nodes.push({
+        n: this._nodes[i].classname,
+        p: this._nodes[i].toJSON()
+      });
     }
     for (let i in this._edges) {
       data.edges.push(this._edges[i].toJSON());
@@ -54,25 +77,27 @@ class FlowGraph extends EventEmitter {
     }
   }
 
-  addNode(nodeDef) {
-    const node = new Node(this, nodeDef);
+  addNode(name, props) {
+    const node = this.require(name).build(this, props);
     if (this._nodes.hasOwnProperty(node.id)) {
       throw new Error(`Node ${node.id} already exists in the graph`);
     }
     this._nodes[node.id] = node;
-    this.trigger('change');
+    this._signalChange();
     return node;
   }
 
   removeNode(node) {
+    this._nodes[node.id].trigger('remove');
     delete this._nodes[node.id];
+    this._signalChange();
   }
 
   link(output, input) {
-    if (!(output.isOutput)) {
+    if (output == null || !output.isOutput) {
       throw new Error('FlowGraph.link(output, input): output must be a node output.');
     }
-    if (!(input.isInput)) {
+    if (input == null || !input.isInput) {
       throw new Error('FlowGraph.link(output, input): input must be a node input.');
     }
 
@@ -92,7 +117,7 @@ class FlowGraph extends EventEmitter {
     output.connect(edge);
     input.connect(edge);
     this._edges.push(edge);
-    this.trigger('change');
+    this._signalChange();
   }
 
   unlink(output, input) {
@@ -107,7 +132,7 @@ class FlowGraph extends EventEmitter {
     edge.src.disconnect(edge);
     edge.dest.disconnect(edge);
     this._edges.splice(this._edges.indexOf(edge), 1);
-    this.trigger('change');
+    this._signalChange();
   }
 
   /**
@@ -148,6 +173,11 @@ class FlowGraph extends EventEmitter {
 
   _getCastsFor(srcType) {
     return this._casts[srcType.toString()] || [];
+  }
+
+  _signalChange() {
+    this.trigger('change');
+    this.trigger('update');
   }
 
   get edges() {

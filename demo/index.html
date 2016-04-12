@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<style media="screen">
+body, html {
+  margin: 0;
+}
+
+#scene {
+  width: 100%;
+  height: 600px;
+  margin: auto;
+}
+</style>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+</head>
+<body>
+<div id="scene"></div>
+
+<script src="../dist/ioflow-core.js"></script>
+<script src="../dist/views/vanilla.js"></script>
+
+<!-- lib script -->
+<script type="text/javascript">
+  var graph = new ioflow.FlowGraph();
+  var view = null;
+  var started = false;
+
+  // Definitions
+  graph.define('ioflow.demo.window', function(builder) {
+    var trigger = builder.output('onload', 'trigger');
+    builder.input('refresh', '*', function() {
+      window.location.reload();
+    });
+    function onWindowLoad() {
+      console.log('loaded !');
+      trigger.send();
+    }
+    window.addEventListener('load', onWindowLoad);
+    builder.teardown(function() {
+      window.removeEventListener('onload', onWindowLoad);
+    })
+  });
+
+  graph.define('ioflow.demo.store', function(builder) {
+    var output = builder.output('data out', 'json');
+    builder.input('emit', '*', function() {
+      if (localStorage) {
+        const item = localStorage.getItem('graph');
+        if (item) {
+          output.send(JSON.parse(item));
+        }
+      }
+    });
+    builder.input('data in', 'json', function(data) {
+      if (localStorage) {
+        localStorage.setItem('graph', JSON.stringify(data));
+      }
+    });
+  });
+
+  graph.define('ioflow.demo.view', function(builder) {
+    builder.input('init', '*', function() {
+      if (view === null) {
+        view = new ioflow.GraphView(graph, { domNode: document.getElementById('scene') });
+      }
+    });
+  });
+
+  graph.define('ioflow.demo.graph', function(builder) {
+    var update_out = builder.output('update', 'json');
+    builder.input('state', 'json', function(state) {
+      graph.setJSON(state);
+    });
+    function onGraphUpdate() {
+      if (started) {
+        update_out.send(graph.toJSON());
+      }
+    }
+    graph.on('update', onGraphUpdate);
+    builder.teardown(function() {
+      graph.off('update', onGraphUpdate);
+    });
+  });
+
+  graph.define('ioflow.demo.mouse', function(builder) {
+    var output = builder.output('x,y', 'coordinates');
+    function handleMove(evt) {
+      output.send({x: evt.pageX, y: evt.pageY});
+    }
+
+    window.addEventListener('mousemove', handleMove);
+    builder.teardown(function(){
+      window.removeEventListener('mousemove', handleMove);
+    })
+  });
+
+  graph.define('ioflow.demo.keyboard', function(builder) {
+    var output = builder.output('key', 'keycode');
+    function handlePress(evt) {
+      output.send(evt.which);
+    }
+
+    window.addEventListener('keypress', handlePress);
+    builder.teardown(function(){
+      window.removeEventListener('keypress', handlePress);
+    })
+  });
+
+  graph.define('ioflow.demo.console', function(builder) {
+    builder.input('log', '*', function(data) {
+      console.log(data);
+    });
+  });
+
+
+  // Runtime
+
+  var windowNode = graph.addNode('ioflow.demo.window', {
+    name: 'window',
+    x: 609, y: 86
+  });
+
+  var graphNode = graph.addNode('ioflow.demo.graph', {
+    name: 'This graph',
+    x: 871, y: 339
+  });
+
+  var storeNode = graph.addNode('ioflow.demo.store', {
+    name: 'localStorage',
+    x: 879, y: 84
+  });
+
+  var viewNode = graph.addNode('ioflow.demo.view', {
+    name: 'This graph view',
+    x: 880, y: 18
+  });
+
+  var consoleNode = graph.addNode('ioflow.demo.console', {
+    name: 'console',
+    x: 609, y: 185
+  });
+
+  graph.addNode('ioflow.demo.mouse', {
+    name: 'Mouse',
+    x: 328, y: 270
+  });
+
+  var kbNode = graph.addNode('ioflow.demo.keyboard', {
+    name: 'Keyboard',
+    x: 308, y: 155
+  });
+
+  graph.link(windowNode.outputs['onload'], storeNode.inputs['emit']);
+  graph.link(windowNode.outputs['onload'], viewNode.inputs['init']);
+  graph.link(storeNode.outputs['data out'], graphNode.inputs['state']);
+  graph.link(graphNode.outputs['update'], storeNode.inputs['data in']);
+  graph.link(kbNode.outputs['key'], consoleNode.inputs['log']);
+
+  started = true;
+</script>
+
+</body>
+</html>
