@@ -11,11 +11,13 @@ export default class Node extends EventEmitter {
     this._classname = classname;
     this._graph = graph;
 
-    this._id = props.hasOwnProperty('id') ? props.id : uid();
+    console.log(props);
+    this._id = props.id != null ? props.id : uid();
     this._pos = {x: props.x || 0, y: props.y || 0};
     this._x = props.x || 0;
     this._y = props.y || 0;
     this.name = props.name || 'unnamed node';
+    this._props = props.props || {};
 
     this._inputs = {};
     this._outputs = {};
@@ -27,17 +29,8 @@ export default class Node extends EventEmitter {
       x: this._x,
       y: this._y,
       name: this.name,
-      input: [],
-      output: []
+      props: this._props
     };
-
-    for (let i in this._inputs) {
-      data.input.push(this._inputs[i].toJSON());
-    }
-
-    for (let i in this._outputs) {
-      data.output.push(this._outputs[i].toJSON());
-    }
 
     return data;
   }
@@ -97,6 +90,10 @@ export default class Node extends EventEmitter {
 
   get classname() {
     return this._classname;
+  }
+
+  get props() {
+    return this._props;
   }
 
   getInputIndex(input) {

@@ -34,13 +34,18 @@ class NodeProvider {
 }
 
 export default class NodeBuilder {
-  constructor(name) {
+  constructor(classname, props = {}) {
     this._closed = false;
-    this._name = name;
+    this._classname = classname;
     this._teardown = null;
     this._inputs = [];
     this._outputs = [];
     this._nodeProvider = new NodeProvider();
+    this._id = props.id;
+    this.name = props.name;
+    this.x = props.x;
+    this.y = props.y;
+    this._props = props.props || {};
   }
 
   input(name, type, handle) {
@@ -64,15 +69,20 @@ export default class NodeBuilder {
     return this;
   }
 
-  build(graph, props) {
+  build(graph) {
     this._closed = true;
 
-    const node = new Node(this._name, graph, props);
+    const node = new Node(this._classname, graph, {
+      id: this._id,
+      name: this.name,
+      x: this.x, y: this.y,
+      props: this.props
+    });
     for (let input of this._inputs) {
-      node.addInput(new NodeInput(node, input));
+      node.addInput(new NodeInput(graph, node, input));
     }
     for (let output of this._outputs) {
-      node.addOutput(new NodeOutput(node, output));
+      node.addOutput(new NodeOutput(graph, node, output));
     }
     if (this._teardown) {
       node.on('remove', this._teardown);
@@ -85,5 +95,13 @@ export default class NodeBuilder {
     if (this._closed) {
       throw new Error('Modifying builder after it was closed. (Probably calling a builder method in a callback) TODO: point user to usage doc');
     }
+  }
+
+  get props() {
+    return this._props;
+  }
+
+  get id() {
+    return this._id;
   }
 }

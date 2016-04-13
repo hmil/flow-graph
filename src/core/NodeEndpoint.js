@@ -2,11 +2,12 @@ import Type from './Type.js';
 
 export default class NodeEndpoint {
 
-  constructor(node, props) {
+  constructor(graph, node, props) {
     this._edges = [];
     this._type = new Type(props.type || '*');
     this._name = props.name;
-    this.node = node;
+    this._graph = graph;
+    this.node = node; // TODO: make private
   }
 
   toJSON() {

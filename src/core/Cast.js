@@ -1,10 +1,10 @@
-
+import Type from './Type.js';
 
 export default class Cast {
 
   constructor(src, dest, fn) {
-    this._src = src;
-    this._dest = dest;
+    this._src = new Type(src);
+    this._dest = new Type(dest);
     this._fn = fn;
   }
 

@@ -2,8 +2,8 @@ import NodeEndpoint from './NodeEndpoint.js';
 
 export default class NodeInput extends NodeEndpoint {
 
-  constructor(node, props) {
-    super(node, props);
+  constructor(graph, node, props) {
+    super(graph, node, props);
     this._handle = props.handle;
   }
 
@@ -11,7 +11,11 @@ export default class NodeInput extends NodeEndpoint {
     return true;
   }
 
-  receive(data) {
-    this._handle(data);
+  receive(data, sender) {
+    this._handle(data, {
+      nodeclass: sender.node.classname,
+      node: sender.node.name,
+      endpoint: sender.node.endpoint
+    });
   }
 }

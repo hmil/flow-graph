@@ -12,6 +12,21 @@ class FlowGraph extends EventEmitter {
     this._edges = [];
     this._casts = {};
     this._defs = {};
+    this._debug = false;
+  }
+
+  setDebug(debug) {
+    this._debug = debug;
+  }
+
+  getDebug() {
+    return this._debug;
+  }
+
+  log(message) {
+    if (this._debug) {
+      console.log(message);
+    }
   }
 
   define(name, factory) {
@@ -21,19 +36,22 @@ class FlowGraph extends EventEmitter {
     this._defs[name] = factory;
   }
 
-  require(name) {
+  _createNode(name, props) {
     let factory = this._defs[name];
 
     if (factory == null) {
       throw new Error(`Node type '${name}' was not defined`);
     }
 
-    let def = new NodeBuilder(name);
+    let def = new NodeBuilder(name, props);
     factory(def);
-    return def;
+    return def.build(this);
   }
 
   setJSON(data) {
+    if (!data.hasOwnProperty('@ioflow-version')) {
+      throw new Error('FlowGraph: Invalid JSON data');
+    }
     this.removeAll();
 
     for (let node of data.nodes) {
@@ -49,7 +67,7 @@ class FlowGraph extends EventEmitter {
 
   toJSON() {
     const data = {
-      version: 0,
+      '@ioflow-version': 0,
       nodes: [],
       edges: []
     };
@@ -78,7 +96,7 @@ class FlowGraph extends EventEmitter {
   }
 
   addNode(name, props) {
-    const node = this.require(name).build(this, props);
+    const node = this._createNode(name, props);
     if (this._nodes.hasOwnProperty(node.id)) {
       throw new Error(`Node ${node.id} already exists in the graph`);
     }

@@ -36,7 +36,6 @@ body, html {
       window.location.reload();
     });
     function onWindowLoad() {
-      console.log('loaded !');
       trigger.send();
     }
     window.addEventListener('load', onWindowLoad);
@@ -45,19 +44,37 @@ body, html {
     })
   });
 
-  graph.define('ioflow.demo.store', function(builder) {
-    var output = builder.output('data out', 'json');
+  graph.define('ioflow.demo.literal', function(builder) {
+    const value = builder.props.value;
+    var type = typeof(value);
+    if (!builder.name) {
+      builder.name = type+': "'+value+'"';
+    }
+    var output = builder.output('value', type);
     builder.input('emit', '*', function() {
+      output.send(value);
+    })
+  });
+
+  graph.define('ioflow.demo.localStorage', function(builder) {
+    var key = builder.props.key || 'default';
+    var output = builder.output('data out', 'json');
+    builder.input('emit', 'string', function(key) {
       if (localStorage) {
-        const item = localStorage.getItem('graph');
+        const item = localStorage.getItem(key);
         if (item) {
           output.send(JSON.parse(item));
         }
       }
     });
-    builder.input('data in', 'json', function(data) {
+    builder.input('clear', 'string', function(key) {
       if (localStorage) {
-        localStorage.setItem('graph', JSON.stringify(data));
+        localStorage.removeItem(key);
+      }
+    });
+    builder.input('data in', 'json', function(data, sender) {
+      if (localStorage) {
+        localStorage.setItem(sender.node, JSON.stringify(data));
       }
     });
   });
@@ -75,6 +92,9 @@ body, html {
     builder.input('state', 'json', function(state) {
       graph.setJSON(state);
     });
+    builder.input('debug', 'boolean', function(enable) {
+      graph.setDebug(enable);
+    });
     function onGraphUpdate() {
       if (started) {
         update_out.send(graph.toJSON());
@@ -87,7 +107,7 @@ body, html {
   });
 
   graph.define('ioflow.demo.mouse', function(builder) {
-    var output = builder.output('x,y', 'coordinates');
+    var output = builder.output('x,y', 'json');
     function handleMove(evt) {
       output.send({x: evt.pageX, y: evt.pageY});
     }
@@ -99,9 +119,9 @@ body, html {
   });
 
   graph.define('ioflow.demo.keyboard', function(builder) {
-    var output = builder.output('key', 'keycode');
+    var output = builder.output('key', 'char');
     function handlePress(evt) {
-      output.send(evt.which);
+      output.send(String.fromCharCode(evt.which));
     }
 
     window.addEventListener('keypress', handlePress);
@@ -116,49 +136,112 @@ body, html {
     });
   });
 
+  graph.define('ioflow.demo.filter', function(builder) {
+    var value = builder.props.value;
+    var output = builder.output('output', typeof(value));
+    if (!builder.name) {
+      builder.name = 'filter: '+value;
+    }
+    builder.input('input', typeof(value), function(input) {
+      if (input === value) {
+        output.send(input);
+      }
+    });
+  });
+
+  graph.addCast('char', 'string', function(char) {
+    return char;
+  });
+
 
   // Runtime
 
   var windowNode = graph.addNode('ioflow.demo.window', {
     name: 'window',
-    x: 609, y: 86
+    x: 269, y: 25
   });
 
   var graphNode = graph.addNode('ioflow.demo.graph', {
     name: 'This graph',
-    x: 871, y: 339
+    x: 737, y: 354
   });
 
-  var storeNode = graph.addNode('ioflow.demo.store', {
+  var storeNode = graph.addNode('ioflow.demo.localStorage', {
     name: 'localStorage',
-    x: 879, y: 84
+    props: {
+      key: 'graph'
+    },
+    x: 733, y: 102
   });
 
   var viewNode = graph.addNode('ioflow.demo.view', {
     name: 'This graph view',
-    x: 880, y: 18
+    x: 512, y: 26
   });
 
   var consoleNode = graph.addNode('ioflow.demo.console', {
     name: 'console',
-    x: 609, y: 185
+    x: 973, y: 51
   });
 
-  graph.addNode('ioflow.demo.mouse', {
+  var mouseNode = graph.addNode('ioflow.demo.mouse', {
     name: 'Mouse',
-    x: 328, y: 270
+    x: 263, y: 164
   });
 
   var kbNode = graph.addNode('ioflow.demo.keyboard', {
     name: 'Keyboard',
-    x: 308, y: 155
+    x: 81, y: 341
   });
 
-  graph.link(windowNode.outputs['onload'], storeNode.inputs['emit']);
+  var graphLiteral1 = graph.addNode('ioflow.demo.literal', {
+    props: {
+      value: 'This graph'
+    },
+    x: 521, y: 102
+  });
+
+  var boolLit1 = graph.addNode('ioflow.demo.literal', {
+    props: {
+      value: true
+    },
+    x: 511, y: 383
+  });
+
+  var boolLit2 = graph.addNode('ioflow.demo.literal', {
+    props: {
+      value: false
+    },
+    x: 511, y: 330
+  });
+
+  var keyFilterY = graph.addNode('ioflow.demo.filter', {
+    props: {
+      value: 'y'
+    },
+    x: 313, y: 383
+  });
+
+  var keyFilterN = graph.addNode('ioflow.demo.filter', {
+    props: {
+      value: 'n'
+    },
+    x: 313, y: 330
+  });
+
+
+  graph.link(windowNode.outputs['onload'], graphLiteral1.inputs['emit']);
   graph.link(windowNode.outputs['onload'], viewNode.inputs['init']);
+  graph.link(graphLiteral1.outputs['value'], storeNode.inputs['emit']);
   graph.link(storeNode.outputs['data out'], graphNode.inputs['state']);
   graph.link(graphNode.outputs['update'], storeNode.inputs['data in']);
-  graph.link(kbNode.outputs['key'], consoleNode.inputs['log']);
+  graph.link(kbNode.outputs['key'], keyFilterY.inputs['input']);
+  graph.link(kbNode.outputs['key'], keyFilterN.inputs['input']);
+  graph.link(keyFilterY.outputs['output'], boolLit1.inputs['emit']);
+  graph.link(keyFilterN.outputs['output'], boolLit2.inputs['emit']);
+  graph.link(boolLit1.outputs['value'], graphNode.inputs['debug']);
+  graph.link(boolLit2.outputs['value'], graphNode.inputs['debug']);
+  graph.link(mouseNode.outputs['x,y'], storeNode.inputs['data in']);
 
   started = true;
 </script>
