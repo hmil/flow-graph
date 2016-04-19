@@ -29,11 +29,21 @@ class FlowGraph extends EventEmitter {
     }
   }
 
-  define(name, factory) {
+  defineNode(name, factory) {
     if (this._defs.hasOwnProperty(name)) {
       throw new Error(`Trying to define node ${name} but this node already exists`);
     }
     this._defs[name] = factory;
+  }
+
+
+  defineCast(src, dest, fn) {
+    let casts = this._casts[src];
+    if (casts === undefined) {
+      casts = this._casts[src] = [];
+    }
+
+    casts.push(new Cast(src, dest, fn));
   }
 
   _createNode(name, props) {
@@ -177,16 +187,6 @@ class FlowGraph extends EventEmitter {
     };
 
     return _typeTrace(outType, inType);
-  }
-
-
-  addCast(src, dest, fn) {
-    let casts = this._casts[src];
-    if (casts === undefined) {
-      casts = this._casts[src] = [];
-    }
-
-    casts.push(new Cast(src, dest, fn));
   }
 
   _getCastsFor(srcType) {

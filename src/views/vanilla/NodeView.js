@@ -121,7 +121,7 @@ export default class NodeView extends EventEmitter {
       'class': 'flow-icon',
       'transform': 'translate(6, 19)'
     });
-    icon.innerHTML = '&#xf0fc';
+    icon.innerHTML = this._node.icon || '';
     this._el.appendChild(icon);
 
 

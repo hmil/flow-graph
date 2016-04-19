@@ -34,18 +34,19 @@ class NodeProvider {
 }
 
 export default class NodeBuilder {
-  constructor(classname, props = {}) {
+  constructor(classname, attrs = {}) {
     this._closed = false;
     this._classname = classname;
     this._teardown = null;
     this._inputs = [];
     this._outputs = [];
     this._nodeProvider = new NodeProvider();
-    this._id = props.id;
-    this.name = props.name;
-    this.x = props.x;
-    this.y = props.y;
-    this._props = props.props || {};
+    this._id = attrs.id;
+    this.name = attrs.name;
+    this.icon = attrs.icon;
+    this.x = attrs.x;
+    this.y = attrs.y;
+    this._props = attrs.props || {};
   }
 
   input(name, type, handle) {
@@ -75,6 +76,7 @@ export default class NodeBuilder {
     const node = new Node(this._classname, graph, {
       id: this._id,
       name: this.name,
+      icon: this.icon,
       x: this.x, y: this.y,
       props: this.props
     });

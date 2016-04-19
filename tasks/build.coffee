@@ -32,33 +32,35 @@ dist = (dest, stream) ->
     .pipe gulp.dest(dest)
 
 module.exports =
-  styles: (watch) -> dist('dist/styles/',
-    gulp.src 'src/styles/*.style.html'
+  styles: (watch) ->
+    stream = gulp.src 'src/styles/*.style.html'
       .pipe named()
-      .pipe webpack(extend(true, {}, webpackConfig, {
+      .pipe webpack extend(true, {}, webpackConfig,
         watch: watch
-      }))
-  )
-  views: (watch) -> dist('dist/views/',
-    gulp.src 'src/views/**/index.js'
+      )
+    dist 'dist/styles/', stream
+
+  views: (watch) ->
+    stream = gulp.src 'src/views/**/index.js'
       .pipe named((file) ->
         [..., basename, _] = file.path.split '/'
         basename
       )
-    .pipe webpack(extend(true, {}, webpackConfig, {
+    .pipe webpack extend(true, {}, webpackConfig,
       watch: watch
       output:
         filename: '[name].js'
       externals:
         'ioflow': 'ioflow'
-    }))
-  )
-  core: (watch) -> dist('dist/',
-    gulp.src('src/core/index.js')
-      .pipe webpack(extend(true, {}, webpackConfig, {
+    )
+    dist 'dist/views/', stream
+
+  core: (watch) ->
+    stream = gulp.src('src/core/index.js')
+      .pipe webpack extend(true, {}, webpackConfig,
         watch: watch
         output:
           library: 'ioflow'
           filename: 'ioflow-core.js'
-      }))
-  )
+      )
+    dist 'dist/', stream

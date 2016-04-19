@@ -1,23 +1,21 @@
-import NodeInput from './NodeInput.js';
-import NodeOutput from './NodeOutput.js';
 import EventEmitter from './EventEmitter.js';
 import { uid } from '../utils.js';
 
 export default class Node extends EventEmitter {
 
-  constructor(classname, graph, props = {}) {
+  constructor(classname, graph, attrs = {}) {
     super();
 
     this._classname = classname;
     this._graph = graph;
 
-    console.log(props);
-    this._id = props.id != null ? props.id : uid();
-    this._pos = {x: props.x || 0, y: props.y || 0};
-    this._x = props.x || 0;
-    this._y = props.y || 0;
-    this.name = props.name || 'unnamed node';
-    this._props = props.props || {};
+    this._id = attrs.id != null ? attrs.id : uid();
+    this._pos = {x: attrs.x || 0, y: attrs.y || 0};
+    this._x = attrs.x || 0;
+    this._y = attrs.y || 0;
+    this.name = attrs.name || 'unnamed node';
+    this.icon = attrs.icon;
+    this._props = attrs.props || {};
 
     this._inputs = {};
     this._outputs = {};
@@ -70,6 +68,14 @@ export default class Node extends EventEmitter {
 
   get id() {
     return this._id;
+  }
+
+  input(name) {
+    return this._inputs[name];
+  }
+
+  output(name) {
+    return this._outputs[name];
   }
 
   get inputs() {

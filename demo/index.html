@@ -230,18 +230,18 @@ body, html {
   });
 
 
-  graph.link(windowNode.outputs['onload'], graphLiteral1.inputs['emit']);
-  graph.link(windowNode.outputs['onload'], viewNode.inputs['init']);
-  graph.link(graphLiteral1.outputs['value'], storeNode.inputs['emit']);
-  graph.link(storeNode.outputs['data out'], graphNode.inputs['state']);
-  graph.link(graphNode.outputs['update'], storeNode.inputs['data in']);
-  graph.link(kbNode.outputs['key'], keyFilterY.inputs['input']);
-  graph.link(kbNode.outputs['key'], keyFilterN.inputs['input']);
-  graph.link(keyFilterY.outputs['output'], boolLit1.inputs['emit']);
-  graph.link(keyFilterN.outputs['output'], boolLit2.inputs['emit']);
-  graph.link(boolLit1.outputs['value'], graphNode.inputs['debug']);
-  graph.link(boolLit2.outputs['value'], graphNode.inputs['debug']);
-  graph.link(mouseNode.outputs['x,y'], storeNode.inputs['data in']);
+  graph.link(windowNode.output('onload'), graphLiteral1.input('emit'));
+  graph.link(windowNode.output('onload'), viewNode.input('init'));
+  graph.link(graphLiteral1.output('value'), storeNode.input('emit'));
+  graph.link(storeNode.output('data out'), graphNode.input('state'));
+  graph.link(graphNode.output('update'), storeNode.input('data in'));
+  graph.link(kbNode.output('key'), keyFilterY.input('input'));
+  graph.link(kbNode.output('key'), keyFilterN.input('input'));
+  graph.link(keyFilterY.output('output'), boolLit1.input('emit'));
+  graph.link(keyFilterN.output('output'), boolLit2.input('emit'));
+  graph.link(boolLit1.output('value'), graphNode.input('debug'));
+  graph.link(boolLit2.output('value'), graphNode.input('debug'));
+  graph.link(mouseNode.output('x,y'), storeNode.input('data in'));
 
   started = true;
 </script>
