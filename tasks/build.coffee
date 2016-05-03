@@ -49,6 +49,7 @@ module.exports =
     .pipe webpack extend(true, {}, webpackConfig,
       watch: watch
       output:
+        library: 'GraphView'
         filename: '[name].js'
       externals:
         'ioflow': 'ioflow'

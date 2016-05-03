@@ -16,7 +16,7 @@ export default class NodeOutput extends NodeEndpoint {
       try {
         e.dest.receive(data, this);
       } catch (error) {
-        this._graph.log(error.stack);
+        console.error(error.stack);
       }
     }
     dbg_indent--;

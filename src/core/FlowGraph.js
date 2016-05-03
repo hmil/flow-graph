@@ -205,6 +205,10 @@ class FlowGraph extends EventEmitter {
   get nodes() {
     return this._nodes;
   }
+
+  get library() {
+    return this._defs;
+  }
 }
 
 FlowGraph.setStyle = function(style) {

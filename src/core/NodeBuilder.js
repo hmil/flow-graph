@@ -44,8 +44,8 @@ export default class NodeBuilder {
     this._id = attrs.id;
     this.name = attrs.name;
     this.icon = attrs.icon;
-    this.x = attrs.x;
-    this.y = attrs.y;
+    this.x = parseInt(attrs.x);
+    this.y = parseInt(attrs.y);
     this._props = attrs.props || {};
   }
 

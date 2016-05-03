@@ -13,7 +13,7 @@ export default class Node extends EventEmitter {
     this._pos = {x: attrs.x || 0, y: attrs.y || 0};
     this._x = attrs.x || 0;
     this._y = attrs.y || 0;
-    this.name = attrs.name || 'unnamed node';
+    this.name = attrs.name || classname;
     this.icon = attrs.icon;
     this._props = attrs.props || {};
 

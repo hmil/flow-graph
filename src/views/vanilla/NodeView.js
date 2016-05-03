@@ -46,7 +46,10 @@ export default class NodeView extends EventEmitter {
     // Clears all DnDs
     this._mouseUpHandler = (evt) => {
       evt.preventDefault();
-      this._dragging = false;
+      if (this._dragging) {
+        this._dragging = false;
+        this._graphView.graph.trigger('change');
+      }
     };
 
     // Updates DnD state
