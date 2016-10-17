@@ -4,7 +4,10 @@ const PARSE_RX = /^(?:([a-z0-9_-]+)(\[\])?\:)?(\*|[a-z0-9_-]+)(\[\])?$/i;
 
 export default class Type {
 
-  constructor(def) {
+  private _type: string;
+  private _array: boolean;
+
+  constructor(def: string) {
     let parsed = def.match(PARSE_RX);
     // parsed = [def, T_type, T_array, type, array]
 
@@ -16,23 +19,23 @@ export default class Type {
     this._array = parsed[4] != null;
   }
 
-  get isWildcard() {
+  get isWildcard(): boolean {
     return this._type === '*' && this._array === false;
   }
 
-  get isWildcardArray() {
+  get isWildcardArray(): boolean {
     return this._type === '*' && this._array === true;
   }
 
-  get isArray() {
+  get isArray(): boolean {
     return this._array;
   }
 
-  eq(other) {
+  eq(other: Type): boolean {
     return this._type === other._type && this._array === other._array;
   }
 
-  lte(other) {
+  lte(other: Type): boolean {
     return (
       // * <: *
       other.isWildcard ||

@@ -1,10 +1,37 @@
-import Edge from './Edge.js';
-import Cast from './Cast.js';
-import NodeBuilder from './NodeBuilder.js';
-import EventEmitter from './EventEmitter.js';
-import { styleManager } from '../utils.js';
+import Edge from './Edge';
+import Cast from './Cast';
+import NodeBuilder from './NodeBuilder';
+import EventEmitter from './EventEmitter';
+import { StyleManager } from '../utils';
+import { v1 } from './dto';
+import Node from './Node';
+import NodeOutput from './NodeOutput';
+import NodeInput from './NodeInput';
+import Type from './Type';
+
+interface NodeMap {
+  [key: string]: Node;
+}
+
+interface CastMap {
+  [key: string]: Array<Cast>;
+}
+
+interface Factory {
+  (NodeBuilder): Node;
+}
+
+interface FactoryMap {
+  [key: string]: Factory;
+}
 
 class FlowGraph extends EventEmitter {
+
+  private _nodes: NodeMap;
+  private _edges: Array<Edge>;
+  private _casts: CastMap;
+  private _defs: FactoryMap;
+  private _debug: boolean;
 
   constructor() {
     super();
@@ -15,21 +42,21 @@ class FlowGraph extends EventEmitter {
     this._debug = false;
   }
 
-  setDebug(debug) {
+  setDebug(debug: boolean): void {
     this._debug = debug;
   }
 
-  getDebug() {
+  getDebug(): boolean {
     return this._debug;
   }
 
-  log(message) {
+  log(message: string): void {
     if (this._debug) {
       console.log(message);
     }
   }
 
-  defineNode(name, factory) {
+  defineNode(name: string, factory: Factory): void {
     if (this._defs.hasOwnProperty(name)) {
       throw new Error(`Trying to define node ${name} but this node already exists`);
     }
@@ -37,7 +64,7 @@ class FlowGraph extends EventEmitter {
   }
 
 
-  defineCast(src, dest, fn) {
+  defineCast(src: string, dest: string, fn: (any) => any) {
     let casts = this._casts[src];
     if (casts === undefined) {
       casts = this._casts[src] = [];
@@ -46,7 +73,7 @@ class FlowGraph extends EventEmitter {
     casts.push(new Cast(src, dest, fn));
   }
 
-  _createNode(name, props) {
+  _createNode(name: string, props: any) {
     let factory = this._defs[name];
 
     if (factory == null) {
@@ -75,8 +102,8 @@ class FlowGraph extends EventEmitter {
     return this;
   }
 
-  toJSON() {
-    const data = {
+  toJSON(): v1.Graph {
+    const data: v1.Graph = {
       '@ioflow-version': 0,
       nodes: [],
       edges: []
@@ -95,7 +122,7 @@ class FlowGraph extends EventEmitter {
     return data;
   }
 
-  removeAll() {
+  removeAll(): void {
     const nb_edges = this._edges.length;
     for (let i = 0 ; i < nb_edges ; i++) {
       this._edges[0].remove();
@@ -105,7 +132,7 @@ class FlowGraph extends EventEmitter {
     }
   }
 
-  addNode(name, props) {
+  addNode(name: string, props: any): Node {
     const node = this._createNode(name, props);
     if (this._nodes.hasOwnProperty(node.id)) {
       throw new Error(`Node ${node.id} already exists in the graph`);
@@ -115,13 +142,13 @@ class FlowGraph extends EventEmitter {
     return node;
   }
 
-  removeNode(node) {
+  removeNode(node: Node): void {
     this._nodes[node.id].trigger('remove');
     delete this._nodes[node.id];
     this._signalChange();
   }
 
-  link(output, input) {
+  link(output: NodeOutput, input: NodeInput) {
     if (output == null || !output.isOutput) {
       throw new Error('FlowGraph.link(output, input): output must be a node output.');
     }
@@ -167,7 +194,7 @@ class FlowGraph extends EventEmitter {
    * Checks that output.type <: input.type
    */
   typeCheck(outType, inType) {
-    const visited = {};
+    const visited: {[key: string]: boolean} = {};
     visited[outType] = true;
 
     const _typeTrace = (output, input) => {
@@ -176,7 +203,7 @@ class FlowGraph extends EventEmitter {
       } else {
         return this._getCastsFor(output).map((cast) => {
           const dest = cast.dest;
-          if (visited[dest]) return false;
+          if (visited[dest.toString()]) return false;
 
           const trace = _typeTrace(dest, input);
           return (trace === false) ? false : trace.concat([cast]);
@@ -189,7 +216,7 @@ class FlowGraph extends EventEmitter {
     return _typeTrace(outType, inType);
   }
 
-  _getCastsFor(srcType) {
+  _getCastsFor(srcType: Type): Array<Cast> {
     return this._casts[srcType.toString()] || [];
   }
 
@@ -209,14 +236,14 @@ class FlowGraph extends EventEmitter {
   get library() {
     return this._defs;
   }
+
+  static setStyle(style): void {
+    StyleManager.setStyle(style);
+  }
+
+  static fromJSON(data: v1.Graph): FlowGraph {
+    return new FlowGraph().setJSON(data);
+  }
 }
-
-FlowGraph.setStyle = function(style) {
-  styleManager.setStyle(style);
-};
-
-FlowGraph.fromJSON = function(data) {
-  return new FlowGraph().setJSON(data);
-};
 
 export default FlowGraph;

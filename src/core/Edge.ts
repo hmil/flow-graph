@@ -1,6 +1,13 @@
-import EventEmitter from './EventEmitter.js';
+import EventEmitter from './EventEmitter';
+import { v1 } from './dto';
+import NodeOutput from './NodeOutput';
+import NodeInput from './NodeInput';
 
-class Edge extends EventEmitter {
+export default class Edge extends EventEmitter {
+
+  private _graph: any;
+  private _src: NodeOutput;
+  private _dest: NodeInput;
 
   constructor(graph, src, dest) {
     super();
@@ -9,7 +16,7 @@ class Edge extends EventEmitter {
     this._dest = dest;
   }
 
-  toJSON() {
+  toJSON(): v1.Edge {
     return {
       src: {
         name: this._src.name,
@@ -37,14 +44,12 @@ class Edge extends EventEmitter {
   toString() {
     return `${this.src} --> ${this.dest}`;
   }
+
+  static srcFromJSON(graph, data) {
+    return graph.nodes[data.src.node].outputs[data.src.name];
+  }
+
+  static destFromJSON(graph, data) {
+    return graph.nodes[data.dest.node].inputs[data.dest.name];
+  }
 }
-
-Edge.srcFromJSON = function(graph, data) {
-  return graph.nodes[data.src.node].outputs[data.src.name];
-};
-
-Edge.destFromJSON = function(graph, data) {
-  return graph.nodes[data.dest.node].inputs[data.dest.name];
-};
-
-export default Edge;

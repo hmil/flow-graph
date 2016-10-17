@@ -11,10 +11,12 @@ webpackConfig =
     module:
       loaders: [
         {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'},
+        {test: /\.ts$/, exclude: /node_modules/, loader: 'ts-loader' },
         {test: /\.style\.html$/, exclude: /node_modules/, loader: 'tools/style-loader.js'}
       ]
     resolve:
       root: path.resolve './src'
+      extensions: ['', '.webpack.js', '.web.js', '.ts', '.js']
     resolveLoader:
       root: path.resolve '.'
     output:

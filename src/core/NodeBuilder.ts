@@ -1,51 +1,81 @@
-import NodeInput from './NodeInput.js';
-import NodeOutput from './NodeOutput.js';
-import Node from './Node.js';
+import NodeInput from './NodeInput';
+import NodeOutput from './NodeOutput';
+import { default as Node, NodeAttributes } from './Node';
+import { uid } from '../utils';
+import Type from './Type';
 
 
 // Thses two classes allow to provide a node output handle to the factory, before
 // the node is actually created.
 class OutputSurrogate {
-  constructor(name, nodeProvider) {
+
+  private _provider: NodeProvider;
+  private _name: string;
+
+  constructor(name: string, nodeProvider: NodeProvider) {
     this._provider = nodeProvider;
     this._name = name;
   }
 
-  send(data) {
+  send(data: any) {
     this._provider.node.send(this._name, data);
   }
 }
 
 class NodeProvider {
-  constructor() {
-    this._node = null;
-  }
 
-  get node() {
-    if (this._node === null) {
+  private _node?: Node;
+
+  get node(): Node {
+    if (this._node === undefined) {
       throw new Error('Node is not yet available. (Probably calling output.send in constructor) TODO: point to usage doc');
     }
     return this._node;
   }
 
-  set node(node) {
+  set node(node: Node) {
     this._node = node;
   }
 }
 
+interface InputParams {
+  name: string;
+  type: Type;
+  handle: (data: any) => void;
+}
+
+interface OutputParams {
+  name: string;
+  type: Type;
+}
+
 export default class NodeBuilder {
-  constructor(classname, attrs = {}) {
+
+  private _closed: boolean;
+  private _classname: string;
+  private _teardown?: () => void;
+  private _inputs: Array<InputParams>;
+  private _outputs: Array<OutputParams>;
+  private _nodeProvider: NodeProvider;
+  private _id: string;
+  private _props: any;
+
+  name: string;
+  icon: string;
+  x: number;
+  y: number;
+
+  constructor(classname: string, attrs: NodeAttributes = {}) {
     this._closed = false;
     this._classname = classname;
-    this._teardown = null;
     this._inputs = [];
     this._outputs = [];
     this._nodeProvider = new NodeProvider();
-    this._id = attrs.id;
-    this.name = attrs.name;
-    this.icon = attrs.icon;
-    this.x = parseInt(attrs.x);
-    this.y = parseInt(attrs.y);
+    this._id = attrs.id || uid();
+    this.name = attrs.name || 'untitled node';
+    this.icon = attrs.icon || '';
+    this.x = parseInt('' + attrs.x);
+    this.y = parseInt('' + attrs.y);
     this._props = attrs.props || {};
   }
 

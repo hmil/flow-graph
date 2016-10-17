@@ -1,24 +1,19 @@
-import NodeEndpoint from './NodeEndpoint.js';
-
-var dbg_indent = -1;
+import NodeEndpoint from './NodeEndpoint';
 
 export default class NodeOutput extends NodeEndpoint {
-  get isOutput() {
+  get isOutput(): boolean {
     return true;
   }
 
-  send(data) {
+  send(data): void {
     // TODO: implement a global FIFO queue for treating sends
     const edges = this.edges.slice();
-    dbg_indent++;
     for(let e of edges) {
-      this._graph.log('    '.repeat(dbg_indent) + e);
       try {
         e.dest.receive(data, this);
       } catch (error) {
         console.error(error.stack);
       }
     }
-    dbg_indent--;
   }
 }

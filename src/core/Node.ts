@@ -1,36 +1,66 @@
-import EventEmitter from './EventEmitter.js';
-import { uid } from '../utils.js';
+import EventEmitter from './EventEmitter';
+import { uid } from '../utils';
+import NodeInput from './NodeInput';
+import NodeOutput from './NodeOutput';
+import { v1 } from './dto';
+
+
+interface InputMap {
+  [key: string]: NodeInput;
+}
+
+interface OutputMap {
+  [key: string]: NodeOutput;
+}
+
+export interface NodeAttributes {
+  id?: string;
+  x?: number;
+  y?: number;
+  name?: string;
+  icon?: string;
+  props?: any;
+}
 
 export default class Node extends EventEmitter {
 
-  constructor(classname, graph, attrs = {}) {
+  private _classname: string;
+  private _graph: any;
+  private _id: string;
+  private _x: number;
+  private _y: number;
+  private _props: any;
+  private _inputs: InputMap;
+  private _outputs: OutputMap;
+
+  name: string;
+  icon: string;
+
+  constructor(classname, graph, attrs: NodeAttributes = {}) {
     super();
 
     this._classname = classname;
     this._graph = graph;
 
     this._id = attrs.id != null ? attrs.id : uid();
-    this._pos = {x: attrs.x || 0, y: attrs.y || 0};
     this._x = attrs.x || 0;
     this._y = attrs.y || 0;
     this.name = attrs.name || classname;
-    this.icon = attrs.icon;
+    this.icon = attrs.icon || '';
     this._props = attrs.props || {};
 
     this._inputs = {};
     this._outputs = {};
   }
 
-  toJSON() {
-    const data = {
+  toJSON(): v1.Node {
+    return {
       id: this._id,
       x: this._x,
       y: this._y,
       name: this.name,
       props: this._props
     };
-
-    return data;
   }
 
   addInput(input) {

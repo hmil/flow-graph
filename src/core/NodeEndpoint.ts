@@ -1,6 +1,19 @@
-import Type from './Type.js';
+import Type from './Type';
+import Edge from './Edge';
+import Node from './Node';
+
+interface NodeJSON {
+  name: string;
+  type: string;
+}
 
 export default class NodeEndpoint {
+
+  private _edges: Array<Edge>;
+  private _type: Type;
+  private _name: string;
+  private _graph: any;
+  public node: Node;
 
   constructor(graph, node, props) {
     this._edges = [];
@@ -10,18 +23,18 @@ export default class NodeEndpoint {
     this.node = node; // TODO: make private
   }
 
-  toJSON() {
+  toJSON(): NodeJSON {
     return {
       name: this._name,
       type: this._type.toString()
     };
   }
 
-  connect(edge) {
+  connect(edge: Edge): void {
     this._edges.push(edge);
   }
 
-  disconnect(edge) {
+  disconnect(edge: Edge): void {
     let id = this._edges.indexOf(edge);
     if (id != -1) {
       this._edges.splice(id, 1);
