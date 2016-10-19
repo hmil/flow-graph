@@ -2,7 +2,6 @@ import Edge from './Edge';
 import Cast from './Cast';
 import NodeBuilder from './NodeBuilder';
 import EventEmitter from './EventEmitter';
-import { StyleManager } from '../utils';
 import { v1 } from './dto';
 import Node from './Node';
 import NodeOutput from './NodeOutput';
@@ -25,7 +24,7 @@ interface FactoryMap {
   [key: string]: Factory;
 }
 
-class FlowGraph extends EventEmitter {
+export default class FlowGraph extends EventEmitter {
 
   private _nodes: NodeMap;
   private _edges: Array<Edge>;
@@ -237,13 +236,7 @@ class FlowGraph extends EventEmitter {
     return this._defs;
   }
 
-  static setStyle(style): void {
-    StyleManager.setStyle(style);
-  }
-
   static fromJSON(data: v1.Graph): FlowGraph {
     return new FlowGraph().setJSON(data);
   }
 }
-
-export default FlowGraph;

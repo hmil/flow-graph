@@ -82,7 +82,7 @@ body, html {
   graph.defineNode('ioflow.demo.view', function(builder) {
     builder.input('init', '*', function() {
       if (view === null) {
-        view = new GraphView(graph, { domNode: document.getElementById('scene') });
+        view = new GraphView.GraphView(graph, { domNode: document.getElementById('scene') });
       }
     });
   });

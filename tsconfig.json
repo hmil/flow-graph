@@ -2,7 +2,8 @@
     "compilerOptions": {
         "allowJs": true,
         "target": "es5",
-        "strictNullChecks": true
+        "strictNullChecks": true,
+        "noImplicitAny": true
     },
     "include": [
         "./src/**/*"

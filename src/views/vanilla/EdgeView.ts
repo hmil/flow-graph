@@ -1,7 +1,13 @@
-import EventEmitter from '../../core/EventEmitter.js';
-import { createSVGNode } from './SVGUtils.js';
+import EventEmitter from '../../core/EventEmitter';
+import Edge from '../../core/Edge';
+import { createSVGNode } from './SVGUtils';
+import GraphView from './GraphView';
 
 export default class EdgeView extends EventEmitter {
+
+  private _edge: Edge;
+  private _graphView: GraphView;
+  private _el: SVGElement;
 
   constructor(graphView, edge) {
     super();
@@ -15,19 +21,6 @@ export default class EdgeView extends EventEmitter {
       'class': 'flow-edge'
     });
 
-    // Events
-    this._changeHandler = () => this.render();
-    this._dblClickHandler = (evt) => {
-      evt.preventDefault();
-      this._edge.remove();
-    };
-    this._mouseDownHandler = (evt) => {
-      evt.preventDefault();
-      if (evt.button === 2) {
-        this._edge.remove();
-      }
-    };
-
     // Initialization
     this.render();
     this._bindEvents();
@@ -36,6 +29,21 @@ export default class EdgeView extends EventEmitter {
   destroy() {
     this._unbindEvents();
   }
+
+  private _changeHandler = () => {
+    this.render();
+  }
+
+  private _dblClickHandler = (evt: MouseEvent): void => {
+    evt.preventDefault();
+    this._edge.remove();
+  }
+  private _mouseDownHandler = (evt: MouseEvent): void => {
+    evt.preventDefault();
+    if (evt.button === 2) {
+      this._edge.remove();
+    }
+  };
 
   _bindEvents() {
     this._edge.src.node.on('change', this._changeHandler);

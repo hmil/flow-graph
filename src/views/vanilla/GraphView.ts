@@ -1,68 +1,41 @@
-import EdgeView from './EdgeView.js';
-import NodeView from './NodeView.js';
-import { createSVGNode } from './SVGUtils.js';
-import * as defaultStyle from '../../styles/default.style.html';
-import { StyleManager } from '../../utils.js';
+import EdgeView from './EdgeView';
+import NodeView from './NodeView';
+import { createSVGNode } from './SVGUtils';
+import defaultStyle from '../../styles/default.style.html';
+import { styleManager } from '../../utils';
+import FlowGraph from '../../core/FlowGraph';
+import NodeEndpoint from '../../core/NodeEndpoint';
+import NodeInput from '../../core/NodeInput';
+import NodeOutput from '../../core/NodeOutput';
+import Node from '../../core/Node';
 
 export default class GraphView {
 
-  constructor(graph, options) {
+  private _graph: FlowGraph;
+  private _edges: {[key: string]: EdgeView} = {};
+  private _nodes: {[key: string]: NodeView} = {};
+  private _dragStart: {x: number, y: number} = {x: 0, y: 0};
+  private _previewEdgeEndpoint?: NodeEndpoint;
+  private _previewEdgeDragFromInput: boolean = false;
+  private _previewEdge: SVGElement;
+  private _el: SVGElement;
+  private _previewEdgeDragAnchor: {x: number, y: number};
+
+  constructor(graph: FlowGraph, options) {
     this._graph = graph;
 
-    if (!StyleManager.hasStyle()) {
-      StyleManager.setStyle(defaultStyle);
+    if (!styleManager.hasStyle()) {
+      styleManager.setStyle(defaultStyle);
     }
-
-    this._edges = {};
-    this._nodes = {};
-
-    this._dragStart = {x: 0, y: 0};
-    this._previewEdgeDragging = false;
-    this._previewEdgeEndpoint = null;
-    this._previewEdgeDragFromInput = false;
     this._previewEdge = createSVGNode('path', {
       'class': 'flow-edge'
     });
-
     this._el = createSVGNode('svg', {
       'class': 'flow-canvas',
       'xmlns': 'http://www.w3.org/2000/svg',
       'width': '100%',
       'height': '100%'
     });
-
-    this._mouseUpHandler = () => {
-      if (this._previewEdgeDragging === true) {
-        this._el.removeChild(this._previewEdge);
-      }
-    };
-
-    this._mouseMoveHandler = (evt) => {
-      if (this._previewEdgeDragging === true) {
-        this._updatePreviewEdge(
-          this._previewEdgeDragAnchor.x + evt.pageX - this._dragStart.x,
-          this._previewEdgeDragAnchor.y + evt.pageY - this._dragStart.y);
-      }
-    };
-
-    this._mouseUpHandler = (evt) => {
-      if (this._previewEdgeDragging === true) {
-        this.stopPreviewEdgeDrag();
-        if (evt.target.hasAttribute('data-flow-io')) {
-          const node = this._graph.nodes[evt.target.getAttribute('data-node')];
-          const endpoint = (this._previewEdgeDragFromInput === true ? node.outputs : node.inputs)[evt.target.getAttribute('data-name')];
-          let src = this._previewEdgeEndpoint;
-          let dest = endpoint;
-          if (this._previewEdgeDragFromInput === true) {
-            src = endpoint;
-            dest = this._previewEdgeEndpoint;
-          }
-          this._graph.link(src, dest);
-        }
-      }
-    };
-
-    this._changeHandler = () => this.render();
 
     if (options.domNode) {
       this.attachTo(options.domNode);
@@ -72,7 +45,42 @@ export default class GraphView {
     this._bindEvents();
   }
 
-  _bindEvents() {
+  private _mouseMoveHandler = (evt: MouseEvent): void => {
+    if (this._previewEdgeEndpoint != null) {
+      this._updatePreviewEdge(
+        this._previewEdgeDragAnchor.x + evt.pageX - this._dragStart.x,
+        this._previewEdgeDragAnchor.y + evt.pageY - this._dragStart.y);
+    }
+  }
+
+  private _mouseUpHandler = (evt: MouseEvent): void => {
+    if (this._previewEdgeEndpoint != null) {
+      this.stopPreviewEdgeDrag();
+      if ((<Element>evt.target).hasAttribute('data-flow-io')) {
+        var attr = (<Element>evt.target).getAttribute('data-node');
+        var name = (<Element>evt.target).getAttribute('data-name');
+        if (!attr || !name) throw new Error('Invalid DOM node');
+        const node = <Node>this._graph.nodes[attr]; // TODO make private and use accessor instead (which throws on not found)
+        const endpoint: NodeEndpoint = (this._previewEdgeDragFromInput === true ? node.outputs : node.inputs)[name];
+        let src: NodeOutput;
+        let dest: NodeInput;
+        if (this._previewEdgeDragFromInput === true) {
+          src = <NodeOutput>endpoint;
+          dest = <NodeInput>this._previewEdgeEndpoint;
+        } else {
+          dest = <NodeInput>endpoint;
+          src = <NodeOutput>this._previewEdgeEndpoint;
+        }
+        this._graph.link(src, dest);
+      }
+    }
+  }
+
+  private _changeHandler = (): void => {
+    this.render();
+  }
+
+  _bindEvents(): void {
     this._graph.on('change', this._changeHandler);
     window.addEventListener('mousemove', this._mouseMoveHandler);
     window.addEventListener('mouseup', this._mouseUpHandler);
@@ -96,22 +104,21 @@ export default class GraphView {
     }
   }
 
-  removeEdge(edge) {
+  removeEdge(edge: EdgeView) {
     delete this._edges[edge.edge.id];
-    this._el.removeChild(edge._el);
+    this._el.removeChild(edge.el);
     edge.destroy();
   }
 
   stopPreviewEdgeDrag() {
     this._el.removeChild(this._previewEdge);
-    this._previewEdgeDragging = false;
+    this._previewEdgeEndpoint = undefined;
     this._updateDropTargets();
   }
 
-  startPreviewEdgeDrag(endpoint, dragStart) {
+  startPreviewEdgeDrag(endpoint: NodeEndpoint, dragStart) {
     this._dragStart.x = dragStart.x;
     this._dragStart.y = dragStart.y;
-    this._previewEdgeDragging = true;
     this._previewEdgeEndpoint = endpoint;
     this._previewEdgeDragFromInput = (endpoint.isInput);
     this._previewEdgeDragAnchor = this._previewEdgeDragFromInput ?
@@ -137,7 +144,7 @@ export default class GraphView {
 
   _updateDropTargets() {
     for (let i in this._nodes) {
-      if (this._previewEdgeDragging === true) {
+      if (this._previewEdgeEndpoint != null) {
         this._nodes[i].updateDropTargets(this._previewEdgeEndpoint);
       } else {
         this._nodes[i].updateDropTargets(null);
@@ -146,14 +153,11 @@ export default class GraphView {
   }
 
   render() {
-
     this.clear();
-
     for (let edge of this._graph.edges) {
       const ev = this._edges[edge.id] = new EdgeView(this, edge);
       this._el.appendChild(ev.el);
     }
-
     for (let i in this._graph.nodes) {
       const nv = this._nodes[i] = new NodeView(this, this._graph.nodes[i]);
       this._el.appendChild(nv.el);
@@ -165,6 +169,8 @@ export default class GraphView {
   }
 
   get style() {
-    return StyleManager.style;
+    var style = styleManager.style;
+    if (style == null) throw new Error("Style is not set");
+    return style;
   }
 }

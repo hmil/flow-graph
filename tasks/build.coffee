@@ -16,7 +16,7 @@ webpackConfig =
       ]
     resolve:
       root: path.resolve './src'
-      extensions: ['', '.webpack.js', '.web.js', '.ts', '.js']
+      extensions: ['', '.ts', '.style.html' ]
     resolveLoader:
       root: path.resolve '.'
     output:
@@ -43,7 +43,7 @@ module.exports =
     dist 'dist/styles/', stream
 
   views: (watch) ->
-    stream = gulp.src 'src/views/**/index.js'
+    stream = gulp.src 'src/views/**/module.ts'
       .pipe named((file) ->
         [..., basename, _] = file.path.split '/'
         basename
@@ -59,7 +59,7 @@ module.exports =
     dist 'dist/views/', stream
 
   core: (watch) ->
-    stream = gulp.src('src/core/index.js')
+    stream = gulp.src('src/core/module.ts')
       .pipe webpack extend(true, {}, webpackConfig,
         watch: watch
         output:

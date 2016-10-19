@@ -23,17 +23,21 @@ function buildStyle(input, cb) {
     if (e) cb (e);
     else {
 
-      var es6code = 'export const css = "' +
+      var es6code = 'class Style {\n' +
+        'css = "' +
         lessc.css.replace(/(\\|")/g, '\\$1').replace(/(\r?\n)/g, '" +\n "') +
         '";\n' +
-        style.script;
+        style.script +
+        "}" +
+        "export default new Style();";
 
       var output;
       try {
         output = babel.transform(es6code, {
           'presets': [
             'es2015'
-          ]
+          ],
+          "plugins": ["transform-class-properties"]
         }).code;
       } catch (e) {
         cb(e);

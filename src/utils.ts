@@ -1,3 +1,4 @@
+import Style from './Style';
 
 function s4() {
   return Math.floor((1 + Math.random()) * 0x10000)
@@ -9,10 +10,11 @@ export function uid() {
   return s4()+s4()+s4()+s4();
 }
 
-export const StyleManager = {
-  style: null,
-  _styleNode: null,
-  setStyle: function(style) {
+class StyleManager {
+  style?: Style;
+  _styleNode: HTMLStyleElement;
+
+  setStyle(style: Style) {
     this.unsetStyle();
     if (this._styleNode == null) {
       this._styleNode = document.createElement('style');
@@ -21,13 +23,16 @@ export const StyleManager = {
     }
     this._styleNode.innerHTML = style.css;
     this.style = style;
-  },
-  unsetStyle: function() {
+  }
+  unsetStyle() {
     if (this._styleNode != null && this._styleNode.parentNode != null) {
       this._styleNode.parentNode.removeChild(this._styleNode);
     }
-  },
-  hasStyle: function() {
+  }
+
+  hasStyle() {
     return this.style != null;
   }
-};
+}
+
+export const styleManager = new StyleManager();

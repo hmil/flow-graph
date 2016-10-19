@@ -37,6 +37,10 @@ export default class Edge extends EventEmitter {
     return this._dest;
   }
 
+  get id() {
+    return this._src.node.id + this._src.name + this._dest.node.id + this._dest.name;
+  }
+
   remove() {
     this._graph.unlink(this._src, this._dest);
   }

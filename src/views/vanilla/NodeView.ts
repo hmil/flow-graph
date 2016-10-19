@@ -1,66 +1,33 @@
-import EventEmitter from '../../core/EventEmitter.js';
-import { createSVGNode } from './SVGUtils.js';
+import EventEmitter from '../../core/EventEmitter';
+import { createSVGNode } from './SVGUtils';
+import Node from '../../core/Node';
+import GraphView from './GraphView'
+import NodeEndpoint from '../../core/NodeEndpoint';
 
 export default class NodeView extends EventEmitter {
 
-  constructor(graphView, node) {
+  private _node: Node;
+  private _graphView: GraphView;
+  private _dragging: boolean = false;
+  private _dragStart: {x: number, y: number} = {x: 0, y: 0};
+  private _dragAnchor: {x: number, y: number} = {x: 0, y: 0};
+  // Endpoint currently being dragged. If the type is incompatible with endoints on this node,
+  // display them with the appropriate class
+  private _targetEndpoint?: NodeEndpoint;
+  private _el: SVGElement;
+
+  constructor(graphView: GraphView, node: Node) {
     super();
 
     // properties
     this._node = node;
     this._graphView = graphView;
-    this._dragging = false;
-    this._dragStart = {x: 0, y: 0};
-    this._dragAnchor = {x: 0, y: 0};
-    // Endpoint currently being dragged. If the type is incompatible with endoints on this node,
-    // display them with the appropriate class
-    this._targetEndpoint = null;
 
     // DOM
     this._el = createSVGNode('g', {
       'class': 'flow-node'
     });
 
-
-    // Events
-
-    // Handles node DnD and Edge creation
-    this._mouseDownHandler = (evt) => {
-      evt.preventDefault();
-      if (evt.button === 0) {
-        this._dragStart.x = evt.pageX;
-        this._dragStart.y = evt.pageY;
-        // click on anchor
-        if(evt.target.hasAttribute('data-flow-io')) {
-          const isInput = evt.target.getAttribute('data-flow-io') === 'input';
-          const endpoint = (isInput ? this._node._inputs : this._node._outputs)[evt.target.getAttribute('data-name')];
-          this._graphView.startPreviewEdgeDrag(endpoint, this._dragStart);
-        } else { // click elsewhere: start dragging
-          this._dragging = true;
-          this._dragAnchor.x = this._node.x;
-          this._dragAnchor.y = this._node.y;
-        }
-      }
-    };
-
-    // Clears all DnDs
-    this._mouseUpHandler = (evt) => {
-      evt.preventDefault();
-      if (this._dragging) {
-        this._dragging = false;
-        this._graphView.graph.trigger('change');
-      }
-    };
-
-    // Updates DnD state
-    this._mouseMoveHandler = (evt) => {
-      if (this._dragging === true) {
-        this._node.x = this._dragAnchor.x + evt.pageX - this._dragStart.x;
-        this._node.y = this._dragAnchor.y + evt.pageY - this._dragStart.y;
-      }
-    };
-
-    this._changeHandler = () => this.render();
 
     // Initialization
     this.render();
@@ -76,9 +43,69 @@ export default class NodeView extends EventEmitter {
     this.render();
   }
 
+
+  // Handles node DnD and Edge creation
+  private _mouseDownHandler = (evt: MouseEvent): void => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    if (evt.button === 0) {
+      this._dragStart.x = evt.pageX;
+      this._dragStart.y = evt.pageY;
+      // click on anchor
+      if((<Element>evt.target).hasAttribute('data-flow-io')) {
+        const endpoint = this._getEndpointForTarget(<Element>evt.target);
+        this._graphView.startPreviewEdgeDrag(endpoint, this._dragStart);
+      } else { // click elsewhere: start dragging
+        this._dragging = true;
+        this._dragAnchor.x = this._node.x;
+        this._dragAnchor.y = this._node.y;
+      }
+    }
+  }
+
+  private _getEndpointForTarget(target: Element): NodeEndpoint {
+    const isInput = target.getAttribute('data-flow-io') === 'input';
+    const name = target.getAttribute('data-name');
+    if (name == null) throw new Error('Invalid target node');
+    if (isInput === true) {
+      return this._node.inputs[name];
+    } else {
+      return this._node.outputs[name];
+    }
+  }
+
+  // Clears all DnDs
+  private _mouseUpHandler = (evt: MouseEvent): void => {
+    evt.preventDefault();
+    if (this._dragging) {
+      this._dragging = false;
+      this._graphView.graph.trigger('change');
+    }
+  }
+
+  // Updates DnD state
+  private _mouseMoveHandler = (evt: MouseEvent): void => {
+    evt.preventDefault();
+    if (this._dragging === true) {
+      this._node.x = this._dragAnchor.x + evt.pageX - this._dragStart.x;
+      this._node.y = this._dragAnchor.y + evt.pageY - this._dragStart.y;
+    }
+  }
+
+  private _dblClickHandler = (evt: MouseEvent): void => {
+    console.log('TODO !!!');
+    // See Workbench.jsx: propagate event through model
+    // this._graphView.graph.trigger('dblClick')
+  }
+
+  private _changeHandler = (): void => {
+    this.render();
+  }
+
   _bindEvents() {
     this._node.on('change', this._changeHandler);
     this._el.addEventListener('mousedown', this._mouseDownHandler);
+    this._el.addEventListener('dblclick', this._dblClickHandler);
     window.addEventListener('mouseup', this._mouseUpHandler);
     window.addEventListener('mousemove', this._mouseMoveHandler);
   }
@@ -86,6 +113,7 @@ export default class NodeView extends EventEmitter {
   _unbindEvents() {
     this._node.off('change', this._changeHandler);
     this._el.removeEventListener('mousedown', this._mouseDownHandler);
+    this._el.removeEventListener('dblclick', this._dblClickHandler);
     window.removeEventListener('mouseup', this._mouseUpHandler);
     window.removeEventListener('mousemove', this._mouseMoveHandler);
   }
@@ -115,8 +143,8 @@ export default class NodeView extends EventEmitter {
 
     const body = createSVGNode('rect', {
       'class': 'flow-body',
-      'width': this.style.BOX_WIDTH,
-      'height': this.style.getBoxHeight(this._node)
+      'width': this.style.BOX_WIDTH.toString(),
+      'height': this.style.getBoxHeight(this._node).toString()
     });
     this._el.appendChild(body);
 
@@ -149,7 +177,7 @@ export default class NodeView extends EventEmitter {
       title.innerHTML = input.name;
       endpoint.appendChild(title);
       const anchor = createSVGNode('circle', {
-        'r': 4.5,
+        'r': '4.5',
         'class': `flow-anchor ${this._getInputClassModifier(input)}`,
         'data-node': this._node.id,
         'data-name': input.name,
@@ -175,7 +203,7 @@ export default class NodeView extends EventEmitter {
       title.innerHTML = output.name;
       endpoint.appendChild(title);
       const anchor = createSVGNode('circle', {
-        'r': 4.5,
+        'r': '4.5',
         'class': `flow-anchor ${this._getOutputClassModifier(output)}`,
         'data-node': this._node.id,
         'data-name': output.name,
